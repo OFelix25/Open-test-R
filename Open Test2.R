@@ -24,28 +24,24 @@ library(xgboost)
 library(pROC)
 # Removing gglpot2
 remove.packages("ggplot2")
-# Then reinstall
+# ReinstallING
 install.packages("ggplot2")
 # Loadng the gglpot2
 library(ggplot2)
 
 # 1. Loading the Dataset
-
 churn_data <- read.csv("C:/Users/HP/Desktop/Open test 1/Test 2/Telco Churn.csv", stringsAsFactors = FALSE)
 
 # 2. First EDA (Raw Data)
 # Summary statistics
 summary(churn_data[, c("tenure", "MonthlyCharges", "TotalCharges")])
-
 # Churn distribution
 ggplot(churn_data, aes(x=Churn)) + 
   geom_bar(fill="skyblue") + 
   ggtitle("Churn Distribution")
-
 # Boxplots: charges vs churn
 ggplot(churn_data, aes(x=Churn, y=MonthlyCharges, fill=Churn)) +
   geom_boxplot() + ggtitle("Monthly Charges by Churn")
-
 # Correlation heatmap for numerical features
 num_vars <- churn_data %>% 
   select(tenure, MonthlyCharges, TotalCharges) %>% 
@@ -55,32 +51,24 @@ corrplot(cor(num_vars, use="complete.obs"), method="color")
 # 3. Preprocessing
 # Handle missing values
 churn_data <- churn_data %>% drop_na()
-
 # Convert TotalCharges to numeric (it may be character)
 churn_data$TotalCharges <- as.numeric(churn_data$TotalCharges)
-
 # Removing the customerID column 
 # It is an identifier, not a feature for the model.
 churn_data <- churn_data %>% select(-customerID)
-
 # One-hot encoding
 dummies <- dummyVars(Churn ~ ., data = churn_data)
 churn_data_encoded <- predict(dummies, newdata = churn_data) %>% as.data.frame()
-
 # Fixing duplicate column names
 names(churn_data_encoded) <- make.unique(names(churn_data_encoded))
-
 # Adding back Churn label
 churn_data_encoded$Churn <- as.factor(churn_data$Churn)
-
 # Cleaning up column names to remove spaces and special characters
 names(churn_data_encoded) <- make.names(names(churn_data_encoded), unique = TRUE)
-
 # Normalizing only numeric features
 num_cols <- sapply(churn_data_encoded, is.numeric)
 preproc <- preProcess(churn_data_encoded[, num_cols], method = c("center", "scale"))
 churn_data_encoded[, num_cols] <- predict(preproc, churn_data_encoded[, num_cols])
-
 # Cleaning column names 
 names(churn_data_encoded) <- make.names(names(churn_data_encoded), unique = TRUE)
 
@@ -97,13 +85,10 @@ churn_data_encoded$total_monthly_contract <- churn_data$MonthlyCharges * as.nume
 # Identify on;y the numeric columns for PCA, excluding the target 'Churn' and the new factor 'tenure_group'
 # Use sapply to find numeric columns, and remove any non-numeric ones that might remain.
 numeric_columns <- sapply(churn_data_encoded, is.numeric)
-
 # Create a new dataframe with only numeric columns, and exclude 'Churn' if it's numeric
 pca_features <- churn_data_encoded[, numeric_columns]
-
 # Checking the structure of the data going into PCA
 str(pca_features) 
-
 # Running PCA on the numeric features matrix
 pca_model <- prcomp(pca_features, center = TRUE, scale. = TRUE)
 pca_data <- as.data.frame(pca_model$x[,1:10])  # top 10 components
@@ -120,7 +105,6 @@ test_data  <- churn_data_encoded[-train_index, ]
 library(rpart)
 dt_model <- rpart(Churn ~ ., data=train_data, method="class")
 dt_pred <- predict(dt_model, test_data, type="class")
-
 # Cleaning the column names to replace spaces with dots
 names(train_data) <- make.names(names(train_data), unique = TRUE)
 names(test_data) <- make.names(names(test_data), unique = TRUE)
@@ -187,4 +171,5 @@ plot(cumsum(pca_model$sdev^2 / sum(pca_model$sdev^2)), type="b",
 # 8. Interpretation
 cat("Top Churn Drivers: check Random Forest importance plot\n")
 cat("Retention Strategies: target high-risk customers, improve contract & service options.\n")
+
 
